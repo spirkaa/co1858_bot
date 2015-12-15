@@ -26,7 +26,7 @@ async def send_news(chat, index=0):
     body = article.select_one('.kris-news-body').text
     more = article.select_one('.link_more').attrs.get('href')
     news = [title, date, body, url+more, url+img]
-    text = '[📰]({4}) *{0} ({1})*\n{2}\n🔎 [Подробнее…]({3})'.format(*news)
+    text = '[📰]({4}) *{0} ({1})*{2}\n🔎 [Подробнее…]({3})'.format(*news)
     buttons = scraper_btns(newsblock, 'news', '📰')
     kb = keyboard(buttons)
     logger.info('%s: send_news', chat.sender['id'])

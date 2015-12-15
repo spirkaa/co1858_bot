@@ -40,8 +40,10 @@ def get_wday(cmd=None):
         5: {'key': 'sat', 'name': 'суббота', 'slug': 'сб'},
         6: {'key': 'sun', 'name': 'воскресенье', 'slug': 'вс'}}
     wday = week[wday_index]
-    today_header = 'сегодня, {}, 📅 {}'.format(
-        wday['name'], datetime.strftime(now, '%d.%m.%Y'))
+    today_header = '📅 сегодня {}, {}\n🕒 сейчас {}'.format(
+        wday['name'],
+        datetime.strftime(now, '%d.%m.%Y'),
+        datetime.strftime(now, '%H:%M'))
     # если в запросе cmd - расписание на день cmd
     if (cmd and cmd != 'завтра'):
         if cmd == 'сегодня':
@@ -54,16 +56,16 @@ def get_wday(cmd=None):
     # во внеурочное время текущего дня - расписание на завтра
     elif (cmd == 'завтра' or lesson_num == 10):
         wday = week[tomorrow_index]
-        wday['name'] = 'завтра, {}, 📅 {}'.format(
+        wday['name'] = '📅 завтра {}, {}'.format(
             wday['name'], datetime.strftime(tommorow, '%d.%m.%Y'))
         wday['lesson'] = str(1)
     elif lesson_num == 0:
         wday['name'] = today_header
         wday['lesson'] = str(1)
-    # по умолчанию - текущий урок
+    # по умолчанию
     else:
+        wday['name'] = today_header
         wday['lesson'] = str(lesson_num)
-        wday['name'] = 'сейчас, 🕒 {}'.format(datetime.strftime(now, '%H:%M'))
     # в выходные - расписание на понедельник
     if (wday['key'] == 'sat' or wday['key'] == 'sun'):
         wday = week[0]

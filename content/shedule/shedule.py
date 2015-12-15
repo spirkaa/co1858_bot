@@ -57,20 +57,15 @@ async def send_shedule(chat, who, cmd=None):
     lesson = data['lesson']
     current = '{}. {}'.format(lesson_index, lesson)
     logger.debug(data)
-    # расписание на день
-    if cmd:
-        shedule = data['shedule']
-        if cmd == 'сегодня':
-            shedule = shedule.replace(current, '*{}*'.format(current))
-        no_lessons = re.compile('^(\d.\s+)+$')
-        if re.match(no_lessons, shedule):
-            shedule = 'у {} нет уроков в этот день'.format(data['objname'])
-    # текущий урок
+    shedule = data['shedule']
+    blank = re.compile(r'(\n\d.\s+)*$')
+    no_lessons = re.compile(r'^(\d.\s+)+$')
+    if re.match(no_lessons, shedule):
+        shedule = 'у {} нет уроков в этот день'.format(data['objname'])
     else:
-        cmd = ''
-        shedule = current
-        if lesson == '' or lesson == ' ':
-            shedule = 'у {} нет *{}* урока'.format(data['objname'], lesson_index)
+        shedule = re.sub(blank, '', shedule)
+    if (not cmd or cmd == 'сегодня'):
+        shedule = shedule.replace(current, '*{}*'.format(current))
     result = '{}:\n{}'.format(wday['name'], shedule.lower())
     kb = keyboard(time_btns(who), data['navbtn'])
     logger.info('%s: %s %s', chat.sender['id'], who, cmd)

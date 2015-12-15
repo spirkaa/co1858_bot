@@ -80,16 +80,16 @@ def video(chat, match):
     return send_video(chat)
 
 
-@bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
-def video_choose(chat, match):
-    logger.info('%s: Видео меню', chat.sender['id'])
-    return send_video(chat, int(match.group(1)))
-
-
 @bot.command(u"\U0001F4F0" + r' (\d{1,2})\. (.*)')
 def news_choose(chat, match):
     logger.info('%s: Новости меню', chat.sender['id'])
     return send_news(chat, int(match.group(1)))
+
+
+@bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
+def video_choose(chat, match):
+    logger.info('%s: Видео меню', chat.sender['id'])
+    return send_video(chat, int(match.group(1)))
 
 
 @bot.default
