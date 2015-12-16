@@ -17,24 +17,21 @@ def time_btns(who):
 
 
 def teachers_btns():
-    buttons = []
     tlist = sorted(TEACHERS)
-    for one, two in zip(tlist[0::2], tlist[1::2]):
-        buttons.append([one, two])
-    return buttons
+    return [[one, two] for one, two in zip(tlist[0::2], tlist[1::2])]
 
 
 def scraper_btns(block, spec, icon):
     buttons = []
-    for k, v in enumerate(block[1:]):
+    for index, v in enumerate(block[1:]):
         if spec == 'news':
-            data = v.select_one('.h3').text
+            title = v.select_one('.h3').text
         elif spec == 'video':
-            data = v.select_one('a').attrs.get('title')
+            title = v.select_one('a').attrs.get('title')
         buttons.append(['{} {}. {}'.format(
             icon,
-            k+1,
-            textwrap.shorten(data, width=25, placeholder='…'))])
+            index+1,
+            textwrap.shorten(title, width=25, placeholder='…'))])
     return buttons
 
 

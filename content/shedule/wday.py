@@ -53,6 +53,8 @@ def get_wday(cmd=None):
                 if value == cmd:
                     wday = week[k]
         wday['lesson'] = str(lesson_num)
+        if lesson_num == 10:
+            wday['lesson'] = str(1)
     # во внеурочное время текущего дня - расписание на завтра
     elif (cmd == 'завтра' or lesson_num == 10):
         wday = week[tomorrow_index]

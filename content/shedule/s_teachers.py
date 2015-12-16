@@ -1,4 +1,3 @@
-import re
 import json
 from time import sleep
 from bs4 import BeautifulSoup
@@ -18,46 +17,33 @@ sleep(1)
 driver.get(url + 'services/rasp.php?m=4&day=1')
 sleep(1)
 soup = BeautifulSoup(driver.page_source)
-rasp = soup.select('table[id=busynessTable] tbody')[0]
-teachers = rasp.select('tr a[href^=javascript]')
-teacher_pages = []
-for teacher in teachers:
-    r = re.compile(r'\'.+\',')
-    c = r.search(teacher.attrs.get('href')).group(0)
-    c = re.sub(r'[\',]', '', c)
-    teacher_pages.append(c)
+shedule_table = soup.select_one('table[id=busynessTable] tbody')
+links = shedule_table.select('tr a[href^=javascript]')
+teacher_links = [link.attrs.get('href').split("'")[1] for link in links]
 
 
-def table_to_dict(spisok, daynum):
-    week = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-    slov = {}
-    for i, urok in enumerate(spisok):
-        slov[i+1] = urok[daynum]
-    return {week[daynum]: slov}
+def table_to_dict(lessons, daynum):
+    days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+    result = {days[daynum]: {i+1: lesson[daynum]
+                             for i, lesson
+                             in enumerate(lessons)}}
+    return result
 
-raspisanie = {}
-for page in teacher_pages:
-    driver.get(url + 'services/' + page)
+
+shedule = {}
+for link in teacher_links:
+    driver.get(url + 'services/' + link)
     sleep(1)
     soup = BeautifulSoup(driver.page_source)
-    name = soup.select('p')[0].get_text().replace('Учитель: ', '')
+    name = soup.select_one('p').get_text().replace('Учитель: ', '')
     rows = soup.select('tbody tr')[1:]
-    uroki = []
-    for row in rows:
-        cols = row.select('td')
-        cols = [col.text for col in cols]
-        uroki.append([col for col in cols])
-    rasp = []
-    for x in range(1, 7):
-        rasp.append(table_to_dict(uroki, x))
-    raspdict = {}
-    for day in rasp:
-        for k, v in day.items():
-            raspdict[k] = v
-    raspisanie[name] = raspdict
+    lessons = [[col.text for col in row.select('td')] for row in rows]
+    rasp = [table_to_dict(lessons, x) for x in range(1, 7)]
+    raspdict = {k: v for day in rasp for k, v in day.items()}
+    shedule[name] = raspdict
 
 
 with open('s_teachers.json', 'w') as outfile:
-    json.dump(raspisanie, outfile)
+    json.dump(shedule, outfile)
 
 driver.quit()
