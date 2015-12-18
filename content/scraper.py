@@ -16,7 +16,7 @@ async def send_news(chat, index=0):
     await chat.send_chat_action(action='typing')
     url = 'http://sch1858uv.mskobr.ru'
     r = await get_source(url + '/novosti/')
-    soup = BeautifulSoup(r)
+    soup = BeautifulSoup(r, 'lxml')
     newsblock = soup.select('.kris-news-box')
     logger.debug(newsblock)
     article = newsblock[index]
@@ -40,7 +40,7 @@ async def send_video(chat, index=0):
     await chat.send_chat_action(action='typing')
     url = 'http://www.youtube.com'
     r = await get_source(url + '/user/co1858/videos')
-    soup = BeautifulSoup(r)
+    soup = BeautifulSoup(r, 'lxml')
     videoblock = soup.select('.yt-lockup-title')
     logger.debug(videoblock)
     video = videoblock[index]

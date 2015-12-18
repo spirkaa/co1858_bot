@@ -33,7 +33,7 @@ def table_to_dict(lessons, daynum):
 shedule = {}
 for link in teacher_links:
     driver.get(url + 'services/' + link)
-    sleep(1)
+    sleep(0.5)
     soup = BeautifulSoup(driver.page_source)
     name = soup.select_one('p').get_text().replace('Учитель: ', '')
     rows = soup.select('tbody tr')[1:]

@@ -7,10 +7,11 @@ from keyboard import keyboard, time_btns
 
 logger = logging.getLogger(__name__)
 
-with open('content/shedule/s_groups.json') as sg:
-    shedule_groups = json.load(sg)
+s_groups = 'content/shedule/s_groups.json'
+s_teachers = 'content/shedule/s_teachers.json'
 
-with open('content/shedule/s_teachers.json') as st:
+with open(s_groups) as sg, open(s_teachers) as st:
+    shedule_groups = json.load(sg)
     shedule_teachers = json.load(st)
 
 
