@@ -1,6 +1,6 @@
 import logging
 import re
-import json
+import ujson
 from aiotg import TgBot
 from content.scraper import send_news, send_video
 from content.shedule import send_shedule
@@ -10,7 +10,7 @@ from keyboard import send_keyboard, keyboard, teachers_btns
 logger = logging.getLogger("co1858_bot")
 
 with open("settings/config.json") as cfg:
-    config = json.load(cfg)
+    config = ujson.load(cfg)
 
 bot = TgBot(**config)
 

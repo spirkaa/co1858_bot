@@ -1,5 +1,5 @@
 import logging
-import json
+import ujson
 import textwrap
 from settings.settings import TEACHERS
 
@@ -43,10 +43,10 @@ def keyboard(buttons=None, navbtn='⬅️ Меню'):
         buttons = [['💼 Учителя'],
                    ['👥 Классы'],
                    ['🔔 Звонки'],
-                   ['📰 Новости', '🎥 Видео']]
+                   ['📰 Новости ЦО', '🎥 Видео ЦО']]
     return {"keyboard": buttons, "resize_keyboard": True}
 
 
 async def send_keyboard(chat, command, text, kb):
     logger.info('%s: %s', chat.sender['id'], command)
-    await chat.send_text(text, reply_markup=json.dumps(kb))
+    await chat.send_text(text, reply_markup=ujson.dumps(kb))

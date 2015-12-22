@@ -1,5 +1,5 @@
 import logging
-import json
+import ujson
 import gspread
 from oauth2client.client import SignedJwtAssertionCredentials
 from time import time
@@ -12,7 +12,7 @@ logger = logging.basicConfig(
     level=logging.INFO)
 logger = logging.getLogger("SheduleToJSON")
 
-json_key = json.load(open('gspreadtoken.json'))
+json_key = ujson.load(open('gspreadtoken.json'))
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = SignedJwtAssertionCredentials(
     json_key['client_email'],
@@ -70,5 +70,5 @@ if __name__ == '__main__':
         for k, v in i.items():
             result[k] = v
     with open('s_groups.json', 'w') as outfile:
-        json.dump(result, outfile)
+        ujson.dump(result, outfile)
     print('It took', round(time()-start, 2), 'seconds.')

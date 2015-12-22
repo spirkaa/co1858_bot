@@ -1,5 +1,5 @@
 import logging
-import json
+import ujson
 import aiohttp
 from bs4 import BeautifulSoup
 from keyboard import keyboard, scraper_btns
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 async def get_source(url):
     response = await aiohttp.get(url)
-    return (await response.text())
+    return await response.text()
 
 
 async def send_news(chat, index=0):
@@ -33,7 +33,7 @@ async def send_news(chat, index=0):
     await chat.send_text(
         text,
         parse_mode='Markdown',
-        reply_markup=json.dumps(kb))
+        reply_markup=ujson.dumps(kb))
 
 
 async def send_video(chat, index=0):
@@ -48,4 +48,4 @@ async def send_video(chat, index=0):
     buttons = scraper_btns(videoblock, 'video', '🎥')
     kb = keyboard(buttons)
     logger.info('%s: send_video', chat.sender['id'])
-    await chat.send_text(url + link, reply_markup=json.dumps(kb))
+    await chat.send_text(url + link, reply_markup=ujson.dumps(kb))

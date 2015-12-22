@@ -1,6 +1,6 @@
 import logging
 import re
-import json
+import ujson
 from .wday import get_wday
 from settings.settings import TEACHERS
 from keyboard import keyboard, time_btns
@@ -11,8 +11,8 @@ s_groups = 'content/shedule/s_groups.json'
 s_teachers = 'content/shedule/s_teachers.json'
 
 with open(s_groups) as sg, open(s_teachers) as st:
-    shedule_groups = json.load(sg)
-    shedule_teachers = json.load(st)
+    shedule_groups = ujson.load(sg)
+    shedule_teachers = ujson.load(st)
 
 
 async def send_shedule(chat, who, cmd=None):
