@@ -22,10 +22,13 @@ async def send_news(chat, index=0):
     article = newsblock[index]
     date = article.select_one('.kris-news-data-txt').text
     title = article.select_one('.h3').text
-    img = article.select_one('img').attrs.get('src')
+    try:
+        img = url + article.select_one('img').attrs.get('src')
+    except:
+        img = ''
     body = article.select_one('.kris-news-body').text
-    more = article.select_one('.link_more').attrs.get('href')
-    news = [title, date, body, url+more, url+img]
+    more = url + article.select_one('.link_more').attrs.get('href')
+    news = [title, date, body, more, img]
     text = '[📰]({4}) *{0} ({1})*{2}\n🔎 [Подробнее…]({3})'.format(*news)
     buttons = scraper_btns(newsblock, 'news', '📰')
     kb = keyboard(buttons)
