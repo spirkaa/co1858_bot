@@ -66,7 +66,7 @@ async def send_shedule(chat, who, cmd=None):
     else:
         shedule = re.sub(blank, '', shedule)
     if (not cmd or cmd == 'сегодня'):
-        shedule = shedule.replace(current, '*{}*'.format(current))
+        shedule = shedule.replace(current, '*{}* 👈'.format(current))
     result = '{}:\n{}'.format(wday['name'], shedule.lower())
     kb = keyboard(time_btns(who), data['navbtn'])
     logger.info('%s: %s %s', chat.sender['id'], who, cmd)

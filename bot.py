@@ -3,7 +3,7 @@ import re
 import ujson
 from aiotg import TgBot
 from content.scraper import send_news, send_video
-from content.shedule import send_shedule
+from content.shedule import send_shedule, send_bell
 from settings.settings import CMDS, GROUPS, TEACHERS
 from keyboard import send_keyboard, keyboard, teachers_btns
 
@@ -59,13 +59,7 @@ def groups_menu(chat, match):
 @bot.command(r'(/bell|/?звонки)')
 def bell(chat, match):
     logger.info('%s: Звонки', chat.sender['id'])
-    text = """
-🔔 Расписание звонков в ЦО № 1858:
-1. 08:30 – 09:15\n2. 09:30 – 10:15\n3. 10:30 – 11:20
-4. 11:35 – 12:20\n5. 12:40 – 13:25\n6. 13:45 – 14:30
-7. 14:50 – 15:35\n8. 15:50 – 16:35\n9. 16:50 – 17:35
-    """
-    return chat.send_text(text)
+    return send_bell(chat)
 
 
 @bot.command(r'(/news|/?новости)')
