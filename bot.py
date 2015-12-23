@@ -4,7 +4,8 @@ import ujson
 from aiotg import TgBot
 from content.scraper import send_news, send_video
 from content.shedule import send_shedule, send_bell
-from settings.settings import CMDS, GROUPS, TEACHERS
+from settings.settings import CMDS, GROUPS, TEACHERS, HELP_TEXT, START_TEXT
+from database import db_check_or_create, db_select
 from keyboard import send_keyboard, keyboard, teachers_btns
 
 logger = logging.getLogger("co1858_bot")
@@ -25,95 +26,104 @@ regex = r'/?(({1})|({2})){0}({3})?'.format(
 
 
 @bot.command(regex)
-def shedule(chat, match):
+async def shedule(chat, match):
     logger.debug('%s (%s) %s', chat.sender, chat.sender['id'], match.groups())
     if match.group(2):
         who, cmd = match.group(2, 4)
     if match.group(3):
         who = re.sub(add_space, r'\1 \3', match.group(3))
         cmd = match.group(4)
-    return send_shedule(chat, who.capitalize(), cmd)
+    await send_shedule(chat, who.capitalize(), cmd)
 
 
 @bot.command(r'(/menu|/?меню)')
-def menu(chat, match):
+async def menu(chat, match):
     text = 'Выбери пункт меню 👇'
     kb = keyboard()
-    return send_keyboard(chat, match.group(1), text, kb)
+    await db_check_or_create(**chat.sender)
+    await send_keyboard(chat, match.group(1), text, kb)
 
 
 @bot.command(r'(/teachers|/?учителя)')
-def teachers_menu(chat, match):
+async def teachers_menu(chat, match):
     text = '💼 Выбери учителя для просмотра расписания (меню прокручивается)'
     kb = keyboard(teachers_btns())
-    return send_keyboard(chat, match.group(1), text, kb)
+    await db_check_or_create(**chat.sender)
+    await send_keyboard(chat, match.group(1), text, kb)
 
 
 @bot.command(r'(/groups|/?классы)')
-def groups_menu(chat, match):
+async def groups_menu(chat, match):
     text = '👥 Выбери класс для просмотра расписания (меню прокручивается)'
     kb = keyboard(GROUPS[:])
-    return send_keyboard(chat, match.group(1), text, kb)
+    await db_check_or_create(**chat.sender)
+    await send_keyboard(chat, match.group(1), text, kb)
 
 
 @bot.command(r'(/bell|/?звонки)')
-def bell(chat, match):
+async def bell(chat, match):
     logger.info('%s: Звонки', chat.sender['id'])
-    return send_bell(chat)
+    await send_bell(chat)
 
 
 @bot.command(r'(/news|/?новости)')
-def news(chat, match):
+async def news(chat, match):
     logger.info('%s: Новости', chat.sender['id'])
-    return send_news(chat)
+    await send_news(chat)
 
 
 @bot.command(r'(/video|/?видео)')
-def video(chat, match):
+async def video(chat, match):
     logger.info('%s: Видео', chat.sender['id'])
-    return send_video(chat)
+    await send_video(chat)
 
 
 @bot.command(u"\U0001F4F0" + r' (\d{1,2})\. (.*)')
-def news_choose(chat, match):
+async def news_choose(chat, match):
     logger.info('%s: Новости меню', chat.sender['id'])
-    return send_news(chat, int(match.group(1)))
+    await send_news(chat, int(match.group(1)))
 
 
 @bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
-def video_choose(chat, match):
+async def video_choose(chat, match):
     logger.info('%s: Видео меню', chat.sender['id'])
-    return send_video(chat, int(match.group(1)))
+    await send_video(chat, int(match.group(1)))
+
+
+@bot.command(r'/msg (.*)')
+async def admin_msg(chat, match):
+    if chat.sender['id'] == 133914054:
+        users = await db_select('msg')
+        for chat in users:
+            logger.info('Админ. сообщение на %s', chat.id)
+            await bot.send_message(chat.id, match.group(1))
+    else:
+        logger.info('Access denied for %s. Echo: %s',
+                    chat.sender['id'],
+                    match.group(1))
+        await chat.reply(match.group(1))
+
+
+@bot.command(r'(/start)')
+async def start(chat, match):
+    kb = keyboard()
+    await db_check_or_create(chat)
+    await send_keyboard(chat, match.group(1), START_TEXT, kb)
 
 
 @bot.default
-@bot.command(r'(/start|/?help)')
-def usage(chat, match):
-    text = """
-⭐ Привет! Я знаю всё о расписании Центра образования № 1858.
-
-📅 Чтобы посмотреть расписание, отправь мне название класса или фамилию учителя:
-11 а завтра
-Лазарева четверг
-
-👇 А лучше просто воспользуйся меню 👇
-
-/teachers - 💼 список учителей
-/groups - 👥 список классов
-/bell - 🔔 расписание звонков
-
-💬 Ошибки, предложения и пожелания: @spirkaa
-    """
+@bot.command(r'(/?help)')
+async def usage(chat, match):
     kb = keyboard()
     if isinstance(match, dict):
         logtext = match['text']
     else:
         logtext = match.group(1)
-    return send_keyboard(chat, logtext, text, kb)
+    await send_keyboard(chat, logtext, HELP_TEXT, kb)
 
 
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
-        level=logging.INFO)
+        level=logging.DEBUG)
     bot.run()

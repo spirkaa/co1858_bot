@@ -18,7 +18,7 @@ async def send_news(chat, index=0):
     r = await get_source(url + '/novosti/')
     soup = BeautifulSoup(r, 'lxml')
     newsblock = soup.select('.kris-news-box')
-    logger.debug(newsblock)
+    # logger.debug(newsblock)
     article = newsblock[index]
     date = article.select_one('.kris-news-data-txt').text
     title = article.select_one('.h3').text
@@ -45,7 +45,7 @@ async def send_video(chat, index=0):
     r = await get_source(url + '/user/co1858/videos')
     soup = BeautifulSoup(r, 'lxml')
     videoblock = soup.select('.yt-lockup-title')
-    logger.debug(videoblock)
+    # logger.debug(videoblock)
     video = videoblock[index]
     link = video.select_one('a').attrs.get('href')
     buttons = scraper_btns(videoblock, 'video', '🎥')
