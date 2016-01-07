@@ -2,6 +2,7 @@ import logging
 import ujson
 import textwrap
 from settings.settings import TEACHERS
+from database import db_check_or_create
 
 logger = logging.getLogger(__name__)
 

@@ -24,10 +24,9 @@ users = sa.Table('users', metadata,
 
 @asyncio.coroutine
 def eng():
-    engine = yield from create_engine(user='login',
-                                      database='co1858_bot',
-                                      host='127.0.0.1')
-    return engine
+    return (yield from create_engine(user='login',
+                                     database='co1858_bot',
+                                     host='127.0.0.1'))
 
 
 @asyncio.coroutine

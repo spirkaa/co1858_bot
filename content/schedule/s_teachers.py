@@ -30,6 +30,11 @@ def table_to_dict(table):
     rasp = {}
     daynames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
     wknd = ['sat', 'sun']
+    ''' zip(*table) меняет местами ряды и колонки #
+        [[1, 2, 3],   ->   [(1, 4, 7),
+         [4, 5, 6],   ->    (2, 5, 8),
+         [7, 8, 9]]   ->    (3, 6, 9)]
+    '''
     for index, day in enumerate(zip(*table)):
         daydict = {}
         for i, lesson in enumerate(day):

@@ -3,7 +3,7 @@ import re
 import ujson
 from aiotg import TgBot
 from content.scraper import send_news, send_video
-from content.shedule import send_shedule, send_bell
+from content.schedule import send_schedule, send_bell
 from settings.settings import CMDS, GROUPS, TEACHERS, HELP_TEXT, START_TEXT
 from database import db_check_or_create, db_select
 from keyboard import send_keyboard, keyboard, teachers_btns
@@ -17,8 +17,8 @@ bot = TgBot(**config)
 
 
 space = r'[\s\-]*'
-teachers_re = ('|').join(TEACHERS)
-cmds_re = ('|').join(CMDS)
+teachers_re = '|'.join(TEACHERS)
+cmds_re = '|'.join(CMDS)
 groups_re = r'[0-9]{1,2}' + space + '[абвгклсАБВГКЛС]'
 add_space = re.compile('(^[0-9]{1,2})(' + space + ')([абвгклсАБВГКЛС])')
 regex = r'/?(({1})|({2})){0}({3})?'.format(
@@ -26,14 +26,14 @@ regex = r'/?(({1})|({2})){0}({3})?'.format(
 
 
 @bot.command(regex)
-async def shedule(chat, match):
+async def schedule(chat, match):
     logger.debug('%s (%s) %s', chat.sender, chat.sender['id'], match.groups())
     if match.group(2):
         who, cmd = match.group(2, 4)
     if match.group(3):
         who = re.sub(add_space, r'\1 \3', match.group(3))
         cmd = match.group(4)
-    await send_shedule(chat, who.capitalize(), cmd)
+    await send_schedule(chat, who.capitalize(), cmd)
 
 
 @bot.command(r'(/menu|/?меню)')
@@ -48,7 +48,6 @@ async def menu(chat, match):
 async def teachers_menu(chat, match):
     text = '💼 Выбери учителя для просмотра расписания (меню прокручивается)'
     kb = keyboard(teachers_btns())
-    await db_check_or_create(**chat.sender)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -56,7 +55,6 @@ async def teachers_menu(chat, match):
 async def groups_menu(chat, match):
     text = '👥 Выбери класс для просмотра расписания (меню прокручивается)'
     kb = keyboard(GROUPS[:])
-    await db_check_or_create(**chat.sender)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -93,8 +91,8 @@ async def video_choose(chat, match):
 @bot.command(r'/msg (.*)')
 async def admin_msg(chat, match):
     if chat.sender['id'] == 133914054:
-        users = await db_select('msg')
-        for chat in users:
+        subscribed_users = await db_select('msg')
+        for chat in subscribed_users:
             logger.info('Админ. сообщение на %s', chat.id)
             await bot.send_message(chat.id, match.group(1))
     else:
@@ -107,7 +105,7 @@ async def admin_msg(chat, match):
 @bot.command(r'(/start)')
 async def start(chat, match):
     kb = keyboard()
-    await db_check_or_create(chat)
+    await db_check_or_create(**chat.sender)
     await send_keyboard(chat, match.group(1), START_TEXT, kb)
 
 
@@ -116,10 +114,10 @@ async def start(chat, match):
 async def usage(chat, match):
     kb = keyboard()
     if isinstance(match, dict):
-        logtext = match['text']
+        chat_text = match['text']
     else:
-        logtext = match.group(1)
-    await send_keyboard(chat, logtext, HELP_TEXT, kb)
+        chat_text = match.group(1)
+    await send_keyboard(chat, chat_text, HELP_TEXT, kb)
 
 
 if __name__ == '__main__':
