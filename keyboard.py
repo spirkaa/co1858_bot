@@ -1,8 +1,7 @@
 import logging
-import ujson
 import textwrap
+import ujson
 from settings.settings import TEACHERS
-from database import db_check_or_create
 
 logger = logging.getLogger(__name__)
 
