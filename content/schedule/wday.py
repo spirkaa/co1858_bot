@@ -45,7 +45,7 @@ def get_wday(cmd=None):
         datetime.strftime(now, '%d.%m.%Y'),
         datetime.strftime(now, '%H:%M'))
     # если в запросе cmd - расписание на день cmd
-    if (cmd and cmd != 'завтра'):
+    if cmd and cmd != 'завтра':
         if cmd == 'сегодня':
             wday['name'] = today_header
         for k, day in week.items():
@@ -56,7 +56,7 @@ def get_wday(cmd=None):
         if lesson_num == 10:
             wday['lesson'] = str(1)
     # во внеурочное время текущего дня - расписание на завтра
-    elif (cmd == 'завтра' or lesson_num == 10):
+    elif cmd == 'завтра' or lesson_num == 10:
         wday = week[tomorrow_index]
         wday['name'] = '📅 завтра {}, {}'.format(
             wday['name'], datetime.strftime(tommorow, '%d.%m.%Y'))
@@ -69,7 +69,7 @@ def get_wday(cmd=None):
         wday['name'] = today_header
         wday['lesson'] = str(lesson_num)
     # в выходные - расписание на понедельник
-    if (wday['key'] == 'sat' or wday['key'] == 'sun'):
+    if wday['key'] == 'sat' or wday['key'] == 'sun':
         wday = week[0]
         wday['name'] = 'следующий рабочий день - ' + wday['name']
         wday['lesson'] = str(1)

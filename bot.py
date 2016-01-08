@@ -1,24 +1,24 @@
 import logging
-import re
 import ujson
+import re
 from aiotg import TgBot
-from content.scraper import send_news, send_video
 from content.schedule import send_schedule, send_bell
-from settings.settings import CMDS, GROUPS, TEACHERS, HELP_TEXT, START_TEXT
+from content.scraper import send_news, send_video
 from database import db_check_or_create, db_select
 from keyboard import send_keyboard, keyboard, teachers_btns
+import settings
 
 logger = logging.getLogger("co1858_bot")
 
-with open("settings/config.json") as cfg:
+with open("config.json") as cfg:
     config = ujson.load(cfg)
 
 bot = TgBot(**config)
 
 
 space = r'[\s\-]*'
-teachers_re = '|'.join(TEACHERS)
-cmds_re = '|'.join(CMDS)
+teachers_re = '|'.join(settings.TEACHERS)
+cmds_re = '|'.join(settings.CMDS)
 groups_re = r'[0-9]{1,2}' + space + '[абвгклсАБВГКЛС]'
 add_space = re.compile('(^[0-9]{1,2})(' + space + ')([абвгклсАБВГКЛС])')
 regex = r'/?(({1})|({2})){0}({3})?'.format(
@@ -54,7 +54,7 @@ async def teachers_menu(chat, match):
 @bot.command(r'(/groups|/?классы)')
 async def groups_menu(chat, match):
     text = '👥 Выбери класс для просмотра расписания (меню прокручивается)'
-    kb = keyboard(GROUPS[:])
+    kb = keyboard(settings.GROUPS[:])
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -106,7 +106,7 @@ async def admin_msg(chat, match):
 async def start(chat, match):
     kb = keyboard()
     await db_check_or_create(**chat.sender)
-    await send_keyboard(chat, match.group(1), START_TEXT, kb)
+    await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
 
 
 @bot.default
@@ -117,7 +117,7 @@ async def usage(chat, match):
         chat_text = match['text']
     else:
         chat_text = match.group(1)
-    await send_keyboard(chat, chat_text, HELP_TEXT, kb)
+    await send_keyboard(chat, chat_text, settings.HELP_TEXT, kb)
 
 
 if __name__ == '__main__':

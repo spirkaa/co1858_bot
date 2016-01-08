@@ -1,9 +1,9 @@
 import logging
-import re
 import ujson
-from .wday import get_wday
-from settings.settings import TEACHERS
+import re
 from keyboard import keyboard, time_btns
+from settings import TEACHERS
+from .wday import get_wday
 
 logger = logging.getLogger(__name__)
 

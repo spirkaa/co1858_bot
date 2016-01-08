@@ -1,7 +1,7 @@
 import logging
 import textwrap
 import ujson
-from settings.settings import TEACHERS
+from settings import TEACHERS
 
 logger = logging.getLogger(__name__)
 

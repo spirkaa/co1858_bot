@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 brew = '/opt/homebrew-cask/Caskroom'
-ff = '/firefox/41.0.1/Firefox.app/Contents/MacOS/firefox-bin'
+ff = '/firefox/43.0.4/Firefox.app/Contents/MacOS/firefox-bin'
 path = '{}{}'.format(brew, ff)
 driver = webdriver.Firefox(firefox_binary=FirefoxBinary(path))
 
@@ -21,8 +21,8 @@ def collect_links():
     driver.get(url + 'services/rasp.php?m=4&day=1')
     sleep(1)
     soup = BeautifulSoup(driver.page_source, 'lxml')
-    shedule_table = soup.select_one('table[id=busynessTable] tbody')
-    links = shedule_table.select('tr a[href^=javascript]')
+    schedule_table = soup.select_one('table[id=busynessTable] tbody')
+    links = schedule_table.select('tr a[href^=javascript]')
     return [link.attrs.get('href').split("'")[1] for link in links]
 
 
@@ -47,7 +47,7 @@ def table_to_dict(table):
 
 
 def main():
-    shedule = {}
+    schedule = {}
     links = collect_links()
     for link in links:
         driver.get(url + 'services/' + link)
@@ -56,11 +56,11 @@ def main():
         name = soup.select_one('p').get_text().replace('Учитель: ', '')
         rows = soup.select('tbody tr')[1:]
         table = [[col.text for col in row.select('td')] for row in rows]
-        shedule[name] = table_to_dict(table)
+        schedule[name] = table_to_dict(table)
     driver.quit()
 
     with open('s_teachers.json', 'w') as outfile:
-        ujson.dump(shedule, outfile)
+        ujson.dump(schedule, outfile)
 
 
 if __name__ == '__main__':
