@@ -1,6 +1,9 @@
 import logging
+import os
 import textwrap
+import asyncio
 import aiohttp
+import aioredis
 from bs4 import BeautifulSoup
 from storage import set_media
 
@@ -21,6 +24,7 @@ async def parse_news():
     articles = {}
     titles = {}
     for index, v in enumerate(newsblock):
+        logger.debug(index)
         article = newsblock[index]
         date = article.select_one('.kris-news-data-txt').text
         title = article.select_one('.h3').text
@@ -48,6 +52,7 @@ async def parse_video():
     articles = {}
     titles = {}
     for index, v in enumerate(videoblock):
+        logger.debug(index)
         video = videoblock[index]
         link = url + video.select_one('a').attrs.get('href')
         title = video.select_one('a').attrs.get('title')
@@ -60,25 +65,21 @@ async def parse_video():
     return [articles, titles]
 
 
-async def main():
-    logger.debug('main() start')
-    import os
-    import aioredis
+async def main(loop):
     host = os.environ.get('REDIS_HOST', 'localhost')
-    redis = await aioredis.create_redis((host, 6379), encoding="utf-8")
-    news = await parse_news()
-    video = await parse_video()
-    await set_media(redis, 'news', news[0], news[1])
-    await set_media(redis, 'video', video[0], video[1])
-    logger.debug('main() end')
+    pool = await aioredis.create_pool((host, 6379), encoding="utf-8", minsize=5, maxsize=10)
+    n = asyncio.ensure_future(parse_news(), loop=loop)
+    v = asyncio.ensure_future(parse_video(), loop=loop)
+    news = await n
+    video = await v
+    await set_media(pool, 'news', news[0], news[1])
+    await set_media(pool, 'video', video[0], video[1])
+    await pool.clear()
 
 
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
         level=logging.DEBUG)
-    logger.debug('__file__ start')
-    import asyncio
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    logger.debug('__file__ end')
+    loop.run_until_complete(main(loop))

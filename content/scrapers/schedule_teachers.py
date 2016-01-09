@@ -62,4 +62,5 @@ def collect():
         table = [[col.text for col in row.select('td')] for row in rows]
         schedule[name] = table_to_dict(table)
     driver.quit()
+    logger.debug('schedule_teachers end')
     return schedule

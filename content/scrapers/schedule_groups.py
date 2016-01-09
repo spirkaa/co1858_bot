@@ -83,4 +83,5 @@ def schedule():
 
 
 def collect():
+    logger.debug('schedule_groups end')
     return {k: v for i in schedule() for k, v in i.items()}

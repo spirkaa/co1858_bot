@@ -39,14 +39,14 @@ async def schedule(chat, match):
     if match.group(3):
         who = re.sub(add_space, r'\1 \3', match.group(3))
         cmd = match.group(4)
-    await send_schedule(chat, redis, who.capitalize(), cmd)
+    await send_schedule(chat, pool, who.capitalize(), cmd)
 
 
 @bot.command(r'(/menu|/?меню)')
 async def menu(chat, match):
     text = 'Выбери пункт меню 👇'
     kb = keyboard()
-    await storage.set_user(redis, **chat.sender)
+    await storage.set_user(pool, **chat.sender)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -73,31 +73,31 @@ async def bell(chat, match):
 @bot.command(r'(/news|/?новости)')
 async def news(chat, match):
     logger.info('%s: Новости', chat.sender['id'])
-    await send_news(chat, redis)
+    await send_news(chat, pool)
 
 
 @bot.command(r'(/video|/?видео)')
 async def video(chat, match):
     logger.info('%s: Видео', chat.sender['id'])
-    await send_video(chat, redis)
+    await send_video(chat, pool)
 
 
 @bot.command(u"\U0001F4F0" + r' (\d{1,2})\. (.*)')
 async def news_choose(chat, match):
     logger.info('%s: Новости меню', chat.sender['id'])
-    await send_news(chat, redis, int(match.group(1)))
+    await send_news(chat, pool, int(match.group(1)))
 
 
 @bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
 async def video_choose(chat, match):
     logger.info('%s: Видео меню', chat.sender['id'])
-    await send_video(chat, redis, int(match.group(1)))
+    await send_video(chat, pool, int(match.group(1)))
 
 
 @bot.command(r'/msg (.*)')
 async def admin_msg(chat, match):
     if chat.sender['id'] == 133914054:
-        subscribed_users = await storage.get_users(redis, 'msg')
+        subscribed_users = await storage.get_users(pool, 'msg')
         for key in subscribed_users:
             chat_id = int(key)
             logger.info('Админ. сообщение на %s', chat_id)
@@ -112,14 +112,14 @@ async def admin_msg(chat, match):
 @bot.command(r'(/start)')
 async def start(chat, match):
     kb = keyboard()
-    await storage.set_user(redis, **chat.sender)
+    await storage.set_user(pool, **chat.sender)
     await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
 
 
 @bot.command(r'(/stop)')
 async def stop(chat, match):
     logger.info('%s: Стоп', chat.sender['id'])
-    await storage.delete_user(redis, **chat.sender)
+    await storage.delete_user(pool, **chat.sender)
     await chat.reply('Ваши настройки уведомлений от бота очищены.\nТеперь можете удалить этот чат')
 
 
@@ -135,9 +135,9 @@ async def usage(chat, match):
 
 
 async def main():
-    global redis
+    global pool
     host = os.environ.get('REDIS_HOST', 'localhost')
-    redis = await aioredis.create_redis((host, 6379), encoding="utf-8")
+    pool = await aioredis.create_pool((host, 6379), encoding="utf-8", minsize=5, maxsize=10)
     await bot.loop()
 
 
@@ -145,7 +145,6 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
         level=logging.DEBUG)
-
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(main())
