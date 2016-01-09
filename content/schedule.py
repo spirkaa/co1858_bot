@@ -1,27 +1,23 @@
 import logging
-import ujson
 import re
+import ujson
+from content.wday import get_wday
 from keyboard import keyboard, time_btns
 from settings import TEACHERS
-from .wday import get_wday
+from storage import get_schedule
 
 logger = logging.getLogger(__name__)
 
-s_groups = 'content/schedule/s_groups.json'
-s_teachers = 'content/schedule/s_teachers.json'
 
-with open(s_groups) as sg, open(s_teachers) as st:
-    schedule_groups = ujson.load(sg)
-    schedule_teachers = ujson.load(st)
-
-
-async def send_schedule(chat, who, cmd=None):
+async def send_schedule(chat, redis, who, cmd=None):
     wday = get_wday(cmd)
     lesson_index = wday['lesson']
     data = {}
 
-    def teacher():
+    async def teacher():
         try:
+            schedule_teachers = await get_schedule(redis, 'teachers')
+            schedule_teachers = ujson.loads(schedule_teachers)
             obj = next(
                 v for k, v
                 in schedule_teachers.items()
@@ -37,8 +33,10 @@ async def send_schedule(chat, who, cmd=None):
             raise
         return
 
-    def group():
+    async def group():
         try:
+            schedule_groups = await get_schedule(redis, 'groups')
+            schedule_groups = ujson.loads(schedule_groups)
             obj = schedule_groups[who.upper()]
             data['lesson'] = ' '.join(obj[wday['key']][lesson_index])
             data['objname'] = 'класса'
@@ -51,9 +49,9 @@ async def send_schedule(chat, who, cmd=None):
         return
 
     if who in TEACHERS:
-        teacher()
+        await teacher()
     else:
-        group()
+        await group()
         who = who.upper()
     lesson = data['lesson']
     current = '{}. {}'.format(lesson_index, lesson)
@@ -69,6 +67,6 @@ async def send_schedule(chat, who, cmd=None):
         schedule = schedule.replace(current, '*{}* 👈'.format(current))
     result = '{}:\n{}'.format(wday['name'], schedule.lower())
     kb = keyboard(time_btns(who), data['navbtn'])
+    await chat.reply(result, kb, 'Markdown')
     logger.info('%s: %s %s', chat.sender['id'], who, cmd)
     logger.debug(repr(result))
-    await chat.reply(result, kb, 'Markdown')

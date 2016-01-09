@@ -1,7 +1,6 @@
 import logging
 import re
-from .wday import get_wday
-
+from content.wday import get_wday
 
 logger = logging.getLogger(__name__)
 

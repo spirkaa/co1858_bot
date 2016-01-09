@@ -1,12 +1,13 @@
 import logging
-import ujson
-import re
 import os
+import re
+import ujson
 import asyncio
 import aioredis
 from aiotg import TgBot
-from content.schedule import send_schedule, send_bell
+from content.bell import send_bell
 from content.media import send_news, send_video
+from content.schedule import send_schedule
 from keyboard import send_keyboard, keyboard, teachers_btns
 import storage
 import settings
@@ -30,20 +31,22 @@ regex = r'/?(({1})|({2})){0}({3})?'.format(
 
 @bot.command(regex)
 async def schedule(chat, match):
+    who = '5 А'
+    cmd = None
     logger.debug('%s (%s) %s', chat.sender, chat.sender['id'], match.groups())
     if match.group(2):
         who, cmd = match.group(2, 4)
     if match.group(3):
         who = re.sub(add_space, r'\1 \3', match.group(3))
         cmd = match.group(4)
-    await send_schedule(chat, who.capitalize(), cmd)
+    await send_schedule(chat, redis, who.capitalize(), cmd)
 
 
 @bot.command(r'(/menu|/?меню)')
 async def menu(chat, match):
     text = 'Выбери пункт меню 👇'
     kb = keyboard()
-    await storage.update_or_create(redis, **chat.sender)
+    await storage.set_user(redis, **chat.sender)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -94,7 +97,7 @@ async def video_choose(chat, match):
 @bot.command(r'/msg (.*)')
 async def admin_msg(chat, match):
     if chat.sender['id'] == 133914054:
-        subscribed_users = await storage.select(redis, 'msg')
+        subscribed_users = await storage.get_users(redis, 'msg')
         for key in subscribed_users:
             chat_id = int(key)
             logger.info('Админ. сообщение на %s', chat_id)
@@ -109,14 +112,14 @@ async def admin_msg(chat, match):
 @bot.command(r'(/start)')
 async def start(chat, match):
     kb = keyboard()
-    await storage.update_or_create(redis, **chat.sender)
+    await storage.set_user(redis, **chat.sender)
     await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
 
 
 @bot.command(r'(/stop)')
 async def stop(chat, match):
     logger.info('%s: Стоп', chat.sender['id'])
-    await storage.delete(redis, **chat.sender)
+    await storage.delete_user(redis, **chat.sender)
     await chat.reply('Ваши настройки уведомлений от бота очищены.\nТеперь можете удалить этот чат')
 
 

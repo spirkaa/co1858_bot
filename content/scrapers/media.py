@@ -2,7 +2,7 @@ import logging
 import textwrap
 import aiohttp
 from bs4 import BeautifulSoup
-from storage import add_from_scraper
+from storage import set_media
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +68,8 @@ async def main():
     redis = await aioredis.create_redis((host, 6379), encoding="utf-8")
     news = await parse_news()
     video = await parse_video()
-    await add_from_scraper(redis, 'news', news[0], news[1])
-    await add_from_scraper(redis, 'video', video[0], video[1])
+    await set_media(redis, 'news', news[0], news[1])
+    await set_media(redis, 'video', video[0], video[1])
     logger.debug('main() end')
 
 

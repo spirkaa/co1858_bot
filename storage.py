@@ -16,7 +16,21 @@ async def dict_to_keys(**sender):
     return keys
 
 
-async def update_or_create(redis, **sender):
+async def iscan(redis):
+    keys = []
+    async for key in redis.iscan():
+        keys.append(key)
+        # logger.debug(key)
+    return keys
+
+
+async def flushdb(redis, dbindex):
+    await redis.select(dbindex)
+    await redis.flushdb()
+
+
+async def set_user(redis, **sender):
+    await redis.select(0)
     keys = await dict_to_keys(**sender)
     tr = redis.multi_exec()
     tr.hmset(*keys)
@@ -28,7 +42,7 @@ async def update_or_create(redis, **sender):
     logger.debug('%s %s', keys[0], val)
 
 
-async def select(redis, target=None):
+async def get_users(redis, target=None):
     keys = await iscan(redis)
     subbed = []
     for key in keys:
@@ -44,26 +58,26 @@ async def select(redis, target=None):
     return subbed
 
 
-async def delete(redis, **sender):
+async def delete_user(redis, **sender):
     keys = await dict_to_keys(**sender)
     logger.debug('%s deleted from storage', keys[0])
     await redis.delete(keys[0])
 
 
-async def iscan(redis):
-    keys = []
-    async for key in redis.iscan():
-        keys.append(key)
-        # logger.debug(key)
-    return keys
+async def set_schedule(redis, schedule_type, schedule):
+    await redis.select(2)
+    await redis.set('schedule:{}'.format(schedule_type), ujson.dumps(schedule))
+    await redis.select(0)
 
 
-async def flushdb(redis, dbindex):
-    await redis.select(dbindex)
-    await redis.flushdb()
+async def get_schedule(redis, schedule_type):
+    await redis.select(2)
+    schedule = await redis.get('schedule:{}'.format(schedule_type))
+    await redis.select(0)
+    return schedule
 
 
-async def add_from_scraper(redis, content_type, articles, titles, *args, **kwargs):
+async def set_media(redis, content_type, articles, titles, *args, **kwargs):
     logger.debug('add_from_scraper start')
     await redis.select(1)
     tr = redis.multi_exec()
@@ -79,7 +93,7 @@ async def add_from_scraper(redis, content_type, articles, titles, *args, **kwarg
     logger.debug('add_from_scraper end')
 
 
-async def get_article(redis, content_type, index=0):
+async def get_media(redis, content_type, index=0):
     # logger.debug('get_article start')
     await redis.select(1)
     article = await redis.get('{}:{}'.format(content_type, index))
@@ -88,7 +102,7 @@ async def get_article(redis, content_type, index=0):
     return article
 
 
-async def get_titles(redis, content):
+async def get_media_titles(redis, content):
     # logger.debug('get_titles start')
     await redis.select(1)
     titles = await redis.lrange('{}:titles'.format(content), 0, -1)

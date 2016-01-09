@@ -21,11 +21,9 @@ def teachers_btns():
 
 
 def scraper_btns(block, icon):
-    logger.debug('scraper_btns start')
     buttons = []
     for item in block[1:]:
         buttons.append(['{} {}'.format(icon, item)])
-    logger.debug('scraper_btns stop')
     return buttons
 
 
