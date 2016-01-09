@@ -1,11 +1,14 @@
 import logging
 import ujson
 import re
+import os
+import asyncio
+import aioredis
 from aiotg import TgBot
 from content.schedule import send_schedule, send_bell
-from content.scraper import send_news, send_video
-from database import db_check_or_create, db_select
+from content.media import send_news, send_video
 from keyboard import send_keyboard, keyboard, teachers_btns
+import storage
 import settings
 
 logger = logging.getLogger("co1858_bot")
@@ -40,7 +43,7 @@ async def schedule(chat, match):
 async def menu(chat, match):
     text = 'Выбери пункт меню 👇'
     kb = keyboard()
-    await db_check_or_create(**chat.sender)
+    await storage.update_or_create(redis, **chat.sender)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
@@ -67,34 +70,35 @@ async def bell(chat, match):
 @bot.command(r'(/news|/?новости)')
 async def news(chat, match):
     logger.info('%s: Новости', chat.sender['id'])
-    await send_news(chat)
+    await send_news(chat, redis)
 
 
 @bot.command(r'(/video|/?видео)')
 async def video(chat, match):
     logger.info('%s: Видео', chat.sender['id'])
-    await send_video(chat)
+    await send_video(chat, redis)
 
 
 @bot.command(u"\U0001F4F0" + r' (\d{1,2})\. (.*)')
 async def news_choose(chat, match):
     logger.info('%s: Новости меню', chat.sender['id'])
-    await send_news(chat, int(match.group(1)))
+    await send_news(chat, redis, int(match.group(1)))
 
 
 @bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
 async def video_choose(chat, match):
     logger.info('%s: Видео меню', chat.sender['id'])
-    await send_video(chat, int(match.group(1)))
+    await send_video(chat, redis, int(match.group(1)))
 
 
 @bot.command(r'/msg (.*)')
 async def admin_msg(chat, match):
     if chat.sender['id'] == 133914054:
-        subscribed_users = await db_select('msg')
-        for chat in subscribed_users:
-            logger.info('Админ. сообщение на %s', chat.id)
-            await bot.send_message(chat.id, match.group(1))
+        subscribed_users = await storage.select(redis, 'msg')
+        for key in subscribed_users:
+            chat_id = int(key)
+            logger.info('Админ. сообщение на %s', chat_id)
+            await bot.send_message(chat_id, match.group(1))
     else:
         logger.info('Access denied for %s. Echo: %s',
                     chat.sender['id'],
@@ -105,8 +109,15 @@ async def admin_msg(chat, match):
 @bot.command(r'(/start)')
 async def start(chat, match):
     kb = keyboard()
-    await db_check_or_create(**chat.sender)
+    await storage.update_or_create(redis, **chat.sender)
     await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
+
+
+@bot.command(r'(/stop)')
+async def stop(chat, match):
+    logger.info('%s: Стоп', chat.sender['id'])
+    await storage.delete(redis, **chat.sender)
+    await chat.reply('Ваши настройки уведомлений от бота очищены.\nТеперь можете удалить этот чат')
 
 
 @bot.default
@@ -120,8 +131,20 @@ async def usage(chat, match):
     await send_keyboard(chat, chat_text, settings.HELP_TEXT, kb)
 
 
+async def main():
+    global redis
+    host = os.environ.get('REDIS_HOST', 'localhost')
+    redis = await aioredis.create_redis((host, 6379), encoding="utf-8")
+    await bot.loop()
+
+
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
         level=logging.DEBUG)
-    bot.run()
+
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        bot.stop()

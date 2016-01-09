@@ -1,5 +1,5 @@
 aiohttp
-aiopg
+aioredis
 aiotg
 beautifulsoup4
 gspread

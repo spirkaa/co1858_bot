@@ -1,5 +1,4 @@
 import logging
-import textwrap
 import ujson
 from settings import TEACHERS
 
@@ -21,17 +20,12 @@ def teachers_btns():
     return [[one, two] for one, two in zip(tlist[0::2], tlist[1::2])]
 
 
-def scraper_btns(block, spec, icon):
+def scraper_btns(block, icon):
+    logger.debug('scraper_btns start')
     buttons = []
-    for index, v in enumerate(block[1:]):
-        if spec == 'news':
-            title = v.select_one('.h3').text
-        elif spec == 'video':
-            title = v.select_one('a').attrs.get('title')
-        buttons.append(['{} {}. {}'.format(
-            icon,
-            index+1,
-            textwrap.shorten(title, width=25, placeholder='…'))])
+    for item in block[1:]:
+        buttons.append(['{} {}'.format(icon, item)])
+    logger.debug('scraper_btns stop')
     return buttons
 
 
