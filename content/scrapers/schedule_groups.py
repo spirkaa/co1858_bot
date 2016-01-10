@@ -1,15 +1,18 @@
 import logging
+import os
 import ujson
 import gspread
 from oauth2client.client import SignedJwtAssertionCredentials
 from multiprocessing.pool import ThreadPool
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logger = logging.getLogger(__name__)
 logging.getLogger('requests').setLevel(logging.WARNING)
 logging.getLogger('oauth2client').setLevel(logging.WARNING)
 
 
-json_key = ujson.load(open('gspreadtoken.json'))
+json_key = ujson.load(open(os.path.join(BASE_DIR, 'gspreadtoken.json')))
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = SignedJwtAssertionCredentials(
     json_key['client_email'],
@@ -61,10 +64,9 @@ def get_schedule(wks):
         logger.debug('%s, %s', klass, k)
         day = {}
         for x in range(v['row_start'], v['row_end'] + 1):
-            num = v['num'] + str(x)  # A13
-            name = v['name'] + str(x)  # B13
-            aud = v['aud'] + str(x)  # C13
-            # day[A13] = [B13, C13]
+            num = v['num'] + str(x)  # = A13
+            name = v['name'] + str(x)  # = B13
+            aud = v['aud'] + str(x)  # = C13
             day[wks.acell(num).value] = [wks.acell(name).value,
                                          wks.acell(aud).value]
         uroki[k] = day
@@ -83,5 +85,6 @@ def schedule():
 
 
 def collect():
+    result = {k: v for i in schedule() for k, v in i.items()}
     logger.debug('schedule_groups end')
-    return {k: v for i in schedule() for k, v in i.items()}
+    return result

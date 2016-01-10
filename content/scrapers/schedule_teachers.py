@@ -1,32 +1,23 @@
 import logging
+import os
 from time import sleep
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 logger = logging.getLogger(__name__)
 logging.getLogger('selenium').setLevel(logging.WARNING)
 
-brew = '/opt/homebrew-cask/Caskroom'
-ff = '/firefox/43.0.4/Firefox.app/Contents/MacOS/firefox-bin'
-path = '{}{}'.format(brew, ff)
-driver = webdriver.Firefox(firefox_binary=FirefoxBinary(path))
-
 url = 'https://mrko.mos.ru/dnevnik/'
 
 
-def collect_links():
-    driver.get(url)
-    driver.find_element_by_id('login').send_keys('login')
-    driver.find_element_by_id('pass').send_keys('password')
-    driver.find_element_by_xpath('//*[@id="em_enter"]/input[4]').click()
-    sleep(1)
-    driver.get(url + 'services/rasp.php?m=4&day=1')
-    sleep(1)
-    soup = BeautifulSoup(driver.page_source, 'lxml')
-    schedule_table = soup.select_one('table[id=busynessTable] tbody')
-    links = schedule_table.select('tr a[href^=javascript]')
-    return [link.attrs.get('href').split("'")[1] for link in links]
+def drv():
+    host = os.environ.get('SELENIUM_HOST', 'localhost')
+    cmd_exec = 'http://{}:4444/wd/hub'.format(host)
+    caps = DesiredCapabilities.FIREFOX
+    driver = webdriver.Remote(command_executor=cmd_exec,
+                              desired_capabilities=caps)
+    return driver
 
 
 def table_to_dict(table):
@@ -50,8 +41,19 @@ def table_to_dict(table):
 
 
 def collect():
+    driver = drv()
+    driver.get(url)
+    driver.find_element_by_id('login').send_keys('login')
+    driver.find_element_by_id('pass').send_keys('password')
+    driver.find_element_by_xpath('//*[@id="em_enter"]/input[4]').click()
+    sleep(1)
+    driver.get(url + 'services/rasp.php?m=4&day=1')
+    sleep(1)
+    soup = BeautifulSoup(driver.page_source, 'lxml')
+    schedule_table = soup.select_one('table[id=busynessTable] tbody')
+    links = schedule_table.select('tr a[href^=javascript]')
+    links = [link.attrs.get('href').split("'")[1] for link in links]
     schedule = {}
-    links = collect_links()
     for link in links:
         logger.debug(link)
         driver.get(url + 'services/' + link)

@@ -145,8 +145,10 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
         level=logging.DEBUG)
+
     loop = asyncio.get_event_loop()
     try:
+        logger.info('bot started')
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         bot.stop()

@@ -4,6 +4,8 @@ aiotg
 beautifulsoup4
 gspread
 lxml
+oauth2client
+pyopenssl
 selenium
-SQLAlchemy
+schedule
 ujson
