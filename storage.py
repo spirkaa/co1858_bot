@@ -1,5 +1,6 @@
 import logging
 import ujson
+from settings import SUBS
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +28,18 @@ async def set_user(pool, **sender):
         pairs = await dict_to_keys(**sender)
         tr = redis.multi_exec()
         tr.hmset(*pairs)
-        subs = ['sub_msg', 'sub_news', 'sub_video']
-        for sub in subs:
+        for name, sub in SUBS.items():
             tr.hsetnx(pairs[0], sub, '1')
         await tr.execute()
         val = await redis.hgetall(pairs[0])
         logger.debug('%s %s', pairs[0], val)
+
+
+async def get_user(pool, chat_id):
+    async with pool.get() as redis:
+        await redis.select(0)
+        user = await redis.hgetall(chat_id)
+        return user
 
 
 async def get_users(pool, target=None):
@@ -51,6 +58,12 @@ async def get_users(pool, target=None):
             if sub == '1':
                 subbed.append(key)
         return subbed
+
+
+async def update_user(pool, chat_id, key, val):
+    async with pool.get() as redis:
+        await redis.select(0)
+        redis.hset(chat_id, key, val)
 
 
 async def delete_user(pool, **sender):
