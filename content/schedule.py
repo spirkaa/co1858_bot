@@ -15,44 +15,42 @@ async def send_schedule(chat, redis, who, cmd=None):
     data = {}
 
     async def teacher():
-        try:
-            schedule_teachers = await get_schedule(redis, 'teachers')
-            schedule_teachers = ujson.loads(schedule_teachers)
-            obj = next(
-                v for k, v
-                in schedule_teachers.items()
-                if k.split(' ')[0] == who)
-            data['lesson'] = obj[wday['key']][lesson_index]
-            data['objname'] = 'учителя'
-            data['schedule'] = '\n'.join(
-                ['%s. %s' % (k, v) for (k, v)
-                 in sorted(obj[wday['key']].items())
-                 if k != '10' and k != '11'])
-            data['navbtn'] = '⬅️ Учителя'
-        except:
-            raise
+        schedule_teachers = await get_schedule(redis, 'teachers')
+        schedule_teachers = ujson.loads(schedule_teachers)
+        obj = next(
+            v for k, v
+            in schedule_teachers.items()
+            if k.split(' ')[0] == who)
+        data['lesson'] = obj[wday['key']][lesson_index]
+        data['objname'] = 'учителя'
+        data['schedule'] = '\n'.join(
+            ['%s. %s' % (k, v) for (k, v)
+             in sorted(obj[wday['key']].items())
+             if k != '10' and k != '11'])
+        data['navbtn'] = '⬅️ Учителя'
         return
 
     async def group():
-        try:
-            schedule_groups = await get_schedule(redis, 'groups')
-            schedule_groups = ujson.loads(schedule_groups)
-            obj = schedule_groups[who.upper()]
-            data['lesson'] = ' '.join(obj[wday['key']][lesson_index])
-            data['objname'] = 'класса'
-            data['schedule'] = '\n'.join(
-                ['%s. %s' % (k, ' '.join(v)) for (k, v)
-                 in sorted(obj[wday['key']].items())])
-            data['navbtn'] = '⬅️ Классы'
-        except:
-            raise
+        schedule_groups = await get_schedule(redis, 'groups')
+        schedule_groups = ujson.loads(schedule_groups)
+        obj = schedule_groups[who.upper()]
+        data['lesson'] = ' '.join(obj[wday['key']][lesson_index])
+        data['objname'] = 'класса'
+        data['schedule'] = '\n'.join(
+            ['%s. %s' % (k, ' '.join(v)) for (k, v)
+             in sorted(obj[wday['key']].items())])
+        data['navbtn'] = '⬅️ Классы'
         return
 
-    if who in TEACHERS:
-        await teacher()
-    else:
-        await group()
-        who = who.upper()
+    try:
+        if who in TEACHERS:
+            await teacher()
+        else:
+            await group()
+            who = who.upper()
+    except RuntimeError as e:
+        logger.error(e.args)
+        return await chat.reply('отсутствует в БД')
     lesson = data['lesson']
     current = '{}. {}'.format(lesson_index, lesson)
     logger.debug(data)

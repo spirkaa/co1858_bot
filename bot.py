@@ -100,29 +100,30 @@ E_NEWS = u'\U0001F4F0'  # 📰
 E_VIDEO = u'\U0001F3A5'  # 🎥
 
 
-@bot.command(r'(/?cfg|/?настройки)')
+@bot.command(r'(/?settings|/?настройки)')
 async def user_config(chat, match):
     logger.info('%s: Настройки', chat.sender['id'])
     user = await storage.get_user(pool, chat.sender['id'])
-    cfg = {}
+    actions = {}
     for k, v in user.items():
         if k in settings.SUBS.values():
             if v == '1':
-                cfg[k] = E_CHECK
-                cfg[k + '_action'] = E_CROSS + ' отписаться'
+                actions[k] = E_CHECK
+                actions[k + '_action'] = E_CROSS + ' отписаться'
             else:
-                cfg[k] = E_CROSS
-                cfg[k + '_action'] = E_CHECK + ' подписаться'
-    logger.debug(cfg)
-    text = settings.USER_CFG.format(**cfg)
-    news_btn = 'Новости: {}'.format(cfg['sub_news_action'])
-    video_btn = 'Видео: {}'.format(cfg['sub_video_action'])
-    btns = [[news_btn], [video_btn]]
+                actions[k] = E_CROSS
+                actions[k + '_action'] = E_CHECK + ' подписаться'
+    logger.debug('settings %s', actions)
+    text = settings.USER_CFG.format(**actions)
+    news_btn = 'Новости: {}'.format(actions['sub_news_action'])
+    video_btn = 'Видео: {}'.format(actions['sub_video_action'])
+    msg_btn = 'Сообщения: {}'.format(actions['sub_msg_action'])
+    btns = [[news_btn], [video_btn], [msg_btn]]
     kb = keyboard(btns)
     await send_keyboard(chat, match.group(1), text, kb)
 
 
-@bot.command(r'^(видео|новости)(: )([\U00002714\U0000274C])')
+@bot.command(r'^(видео|новости|сообщения)(: )([\U00002714\U0000274C])')
 async def cfg_news(chat, match):
     val = '0'
     key = settings.SUBS[match.group(1).lower()]
@@ -135,19 +136,54 @@ async def cfg_news(chat, match):
 # Admin commands
 
 
+@bot.command(r'(/admin|админ)')
+async def admin(chat, match):
+    if chat.sender['id'] in settings.ADMINS:
+        text = """
+        ЦУБ - Центр Управления Ботом.
+
+        /msg текст - отправить 'текст' всем подписчикам"""
+        buttons = [['/users', '/users stat']]
+        kb = keyboard(buttons)
+        await send_keyboard(chat, match.group(1), text, kb)
+    else:
+        await chat.send_text(settings.HELP_TEXT)
+
+
 @bot.command(r'/msg (.*)')
 async def admin_msg(chat, match):
-    if chat.sender['id'] == 133914054:
-        subscribed_users = await storage.get_users(pool, 'msg')
+    if chat.sender['id'] in settings.ADMINS:
+        subscribed_users = await storage.get_users_sub(pool, 'msg')
+        msg_title = '*сообщение для всех от* @spirkaa:'
+        msg_footer = 'Отписаться от всех сообщений бота - команда /stop'
+        text = '{}\n{}\n---\n{}'
+        text = text.format(msg_title, match.group(1), msg_footer)
+        md = {'parse_mode': 'Markdown'}
         for key in subscribed_users:
             chat_id = int(key)
-            logger.info('Админ. сообщение на %s', chat_id)
-            await bot.send_message(chat_id, match.group(1))
+            logger.info('%s %s', msg_title, chat_id)
+            try:
+                await bot.send_message(chat_id, text, **md)
+            except RuntimeError:
+                await storage.delete_user(pool, key)
     else:
         logger.info('Access denied for %s. Echo: %s',
                     chat.sender['id'],
                     match.group(1))
         await chat.reply(match.group(1))
+
+
+@bot.command(r'/users( stat)?')
+async def admin_users(chat, match):
+    if chat.sender['id'] in settings.ADMINS:
+        logger.debug('admin_users, %s', chat.sender['id'])
+        users = await storage.get_users(pool)
+        if match.group(1):
+            return await chat.send_text(len(users))
+        text = '. {first_name} {last_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
+        text = '\n'.join([str(i+1)+text.format(**user)
+                          for i, user in enumerate(users)])
+        await chat.send_text(text)
 
 
 # Basic commands
@@ -168,7 +204,8 @@ async def start(chat, match):
     await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
 
 
-@bot.command(r'(/stop|/delete)')
+@bot.command(r'/stop')
+@bot.command(r'/delete')
 async def stop(chat, match):
     logger.info('%s: Стоп', chat.sender['id'])
     await storage.delete_user(pool, **chat.sender)
@@ -176,7 +213,7 @@ async def stop(chat, match):
 
 
 @bot.default
-@bot.command(r'(/?help)')
+@bot.command(r'(/?help|помощь)')
 async def usage(chat, match):
     kb = keyboard()
     if isinstance(match, dict):

@@ -1,8 +1,14 @@
 import logging
+import datetime
+import time
 import ujson
 from settings import SUBS
 
 logger = logging.getLogger(__name__)
+
+
+def unix_time(time_):
+    return int(time.mktime(time_.timetuple()))
 
 
 async def dict_to_keys(**sender):
@@ -25,24 +31,41 @@ async def flushdb(pool, dbindex):
 async def set_user(pool, **sender):
     async with pool.get() as redis:
         await redis.select(0)
+        now = unix_time(datetime.datetime.now())
         pairs = await dict_to_keys(**sender)
         tr = redis.multi_exec()
         tr.hmset(*pairs)
         for name, sub in SUBS.items():
             tr.hsetnx(pairs[0], sub, '1')
+        tr.hsetnx(pairs[0], 'created', now)
+        tr.hsetnx(pairs[0], 'modified', now)
         await tr.execute()
-        val = await redis.hgetall(pairs[0])
-        logger.debug('%s %s', pairs[0], val)
+        # val = await redis.hgetall(pairs[0])
+        # logger.debug('%s %s', pairs[0], val)
 
 
 async def get_user(pool, chat_id):
     async with pool.get() as redis:
         await redis.select(0)
         user = await redis.hgetall(chat_id)
+        # logger.debug('get_user %s', user)
         return user
 
 
-async def get_users(pool, target=None):
+async def get_users(pool):
+    async with pool.get() as redis:
+        await redis.select(0)
+        keys = await redis.keys('*')
+        users = []
+        for key in keys:
+            data = await redis.hgetall(key)
+            data['id'] = key
+            users.append(data)
+            # logger.debug('%s %s', key, data)
+        return users
+
+
+async def get_users_sub(pool, target):
     async with pool.get() as redis:
         subbed = []
         await redis.select(0)
@@ -62,16 +85,22 @@ async def get_users(pool, target=None):
 
 async def update_user(pool, chat_id, key, val):
     async with pool.get() as redis:
+        now = unix_time(datetime.datetime.now())
         await redis.select(0)
-        redis.hset(chat_id, key, val)
+        await redis.hset(chat_id, key, val)
+        await redis.hset(chat_id, 'modified', now)
 
 
-async def delete_user(pool, **sender):
+async def delete_user(pool, key=None, **sender):
     async with pool.get() as redis:
         await redis.select(0)
-        key = await dict_to_keys(**sender)
-        await redis.delete(key[0])
-        logger.debug('%s deleted from storage', key[0])
+        if key:
+            await redis.delete(key)
+            logger.info('%s deleted: he kick us!', key)
+        else:
+            key = await dict_to_keys(**sender)
+            await redis.delete(key[0])
+            logger.info('%s deleted: /stop', key[0])
 
 
 async def set_schedule(pool, schedule_type, schedule):

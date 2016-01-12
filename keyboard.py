@@ -1,6 +1,6 @@
 import logging
 import ujson
-from settings import TEACHERS
+from settings import TEACHERS, ADMINS
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,13 @@ def keyboard(buttons=None, navbtn='⬅️ Меню'):
     else:
         buttons = [['💼 Учителя', '👥 Классы', '🔔 Звонки'],
                    ['📰 Новости ЦО', '🎥 Видео ЦО'],
-                   # ['🔧 Настройки']
+                   ['🔧Настройки', '❓Помощь'],
                    ]
     return {"keyboard": buttons, "resize_keyboard": True}
 
 
 async def send_keyboard(chat, command, text, kb):
-    logger.info('%s: %s', chat.sender['id'], command)
+    logger.info('%s (%s): %s', chat.sender['id'], chat.sender['first_name'], command)
+    if chat.sender['id'] in ADMINS:
+        kb['keyboard'].append(['🅰️ Админ'])
     await chat.send_text(text, reply_markup=ujson.dumps(kb))
