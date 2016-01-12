@@ -17,7 +17,10 @@ def time_btns(who):
 
 def teachers_btns():
     tlist = sorted(TEACHERS)
-    return [[one, two] for one, two in zip(tlist[0::2], tlist[1::2])]
+    buttons = [[one, two] for one, two in zip(tlist[0::2], tlist[1::2])]
+    if len(TEACHERS) % 2 != 0:
+        buttons.append([TEACHERS[-1]])
+    return buttons
 
 
 def scraper_btns(block, icon):
@@ -32,10 +35,10 @@ def keyboard(buttons=None, navbtn='⬅️ Меню'):
         buttons.insert(0, [navbtn])
         buttons.append([navbtn])
     else:
-        buttons = [['💼 Учителя'],
-                   ['👥 Классы'],
-                   ['🔔 Звонки'],
-                   ['📰 Новости ЦО', '🎥 Видео ЦО']]
+        buttons = [['💼 Учителя', '👥 Классы', '🔔 Звонки'],
+                   ['📰 Новости ЦО', '🎥 Видео ЦО'],
+                   # ['🔧 Настройки']
+                   ]
     return {"keyboard": buttons, "resize_keyboard": True}
 
 
