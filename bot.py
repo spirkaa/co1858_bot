@@ -20,6 +20,7 @@ with open("config.json") as cfg:
 bot = TgBot(**config)
 
 
+# content commands: schedule
 space = r'[\s\-]*'
 teachers_re = '|'.join(settings.TEACHERS)
 cmds_re = '|'.join(settings.CMDS)
@@ -27,9 +28,6 @@ groups_re = r'[0-9]{1,2}' + space + '[абвгклсАБВГКЛС]'
 add_space = re.compile('(^[0-9]{1,2})(' + space + ')([абвгклсАБВГКЛС])')
 regex = r'/?(({1})|({2})){0}({3})?'.format(
     space, teachers_re, groups_re, cmds_re)
-
-
-# content commands: schedule
 
 
 @bot.command(regex)
@@ -45,62 +43,64 @@ async def schedule(chat, match):
     await send_schedule(chat, pool, who.capitalize(), cmd)
 
 
-@bot.command(r'(/teachers|/?учителя)')
+@bot.command(r'/?(teachers|учителя)')
 async def teachers_menu(chat, match):
     text = '💼 Выбери учителя для просмотра расписания (меню прокручивается)'
     kb = keyboard(teachers_btns())
     await send_keyboard(chat, match.group(1), text, kb)
 
 
-@bot.command(r'(/groups|/?классы)')
+@bot.command(r'/?(groups|классы)')
 async def groups_menu(chat, match):
     text = '👥 Выбери класс для просмотра расписания (меню прокручивается)'
     kb = keyboard(settings.GROUPS[:])
     await send_keyboard(chat, match.group(1), text, kb)
 
 
-@bot.command(r'(/bell|/?звонки)')
+@bot.command(r'/?(bell|звонки)')
 async def bell(chat, match):
     logger.info('%s: Звонки', chat.sender['id'])
     await send_bell(chat)
 
 
 # content commands: media
+E_NEWS = u'\U0001F4F0'  # 📰
+E_VIDEO = u'\U0001F3A5'  # 🎥
+media_re = r'\s(\d{1,2})\.\s+(.*)'
 
 
-@bot.command(r'^(\U0001F4F0+\s(/news|новости))')
+@bot.command(r'^({}+\s/?(news|новости))'.format(E_NEWS))
 async def news(chat, match):
     logger.info('%s: Новости', chat.sender['id'])
     await send_news(chat, pool)
 
 
-@bot.command(r'^(\U0001F3A5+\s(/video|видео))')
+@bot.command(r'^{}+{}'.format(E_NEWS, media_re))
+async def news_choose(chat, match):
+    num = int(match.group(1))
+    logger.info('%s: Новости меню, %s', chat.sender['id'], num)
+    await send_news(chat, pool, num)
+
+
+@bot.command(r'^({}+\s/?(video|видео))'.format(E_VIDEO))
 async def video(chat, match):
     logger.info('%s: Видео', chat.sender['id'])
     await send_video(chat, pool)
 
 
-@bot.command(u"\U0001F4F0" + r' (\d{1,2})\. (.*)')
-async def news_choose(chat, match):
-    logger.info('%s: Новости меню', chat.sender['id'])
-    await send_news(chat, pool, int(match.group(1)))
-
-
-@bot.command(u"\U0001F3A5" + r' (\d{1,2})\. (.*)')
+@bot.command(r'^{}+{}'.format(E_VIDEO, media_re))
 async def video_choose(chat, match):
-    logger.info('%s: Видео меню', chat.sender['id'])
-    await send_video(chat, pool, int(match.group(1)))
+    num = int(match.group(1))
+    logger.info('%s: Видео меню, %s', chat.sender['id'], num)
+    await send_video(chat, pool, num)
 
 
 # User settings commands
-
 E_CHECK = u'\U00002714'  # ✔
 E_CROSS = u'\U0000274C'  # ❌
-E_NEWS = u'\U0001F4F0'  # 📰
-E_VIDEO = u'\U0001F3A5'  # 🎥
 
 
-@bot.command(r'(/?settings|/?настройки)')
+@bot.command(r'/?(settings|настройки)')
 async def user_config(chat, match):
     logger.info('%s: Настройки', chat.sender['id'])
     user = await storage.get_user(pool, chat.sender['id'])
@@ -123,11 +123,11 @@ async def user_config(chat, match):
     await send_keyboard(chat, match.group(1), text, kb)
 
 
-@bot.command(r'^(видео|новости|сообщения)(: )([\U00002714\U0000274C])')
+@bot.command(r'^(видео|новости|сообщения):\s([{}{}])'.format(E_CHECK, E_CROSS))
 async def cfg_news(chat, match):
     val = '0'
     key = settings.SUBS[match.group(1).lower()]
-    if match.group(3) == E_CHECK:
+    if match.group(2) == E_CHECK:
         val = '1'
     await storage.update_user(pool, chat.sender['id'], key, val)
     await user_config(chat, match)
@@ -136,7 +136,7 @@ async def cfg_news(chat, match):
 # Admin commands
 
 
-@bot.command(r'(/admin|админ)')
+@bot.command(r'/?(admin|админ)')
 async def admin(chat, match):
     if chat.sender['id'] in settings.ADMINS:
         text = """
@@ -167,7 +167,7 @@ async def admin_msg(chat, match):
             except RuntimeError:
                 await storage.delete_user(pool, key)
     else:
-        logger.info('Access denied for %s. Echo: %s',
+        logger.info('Доступ запрещен. %s: %s',
                     chat.sender['id'],
                     match.group(1))
         await chat.reply(match.group(1))
@@ -189,7 +189,7 @@ async def admin_users(chat, match):
 # Basic commands
 
 
-@bot.command(r'(/menu|/?меню)')
+@bot.command(r'/?(menu|меню)')
 async def menu(chat, match):
     text = 'Выбери пункт меню 👇'
     kb = keyboard()
@@ -204,8 +204,8 @@ async def start(chat, match):
     await send_keyboard(chat, match.group(1), settings.START_TEXT, kb)
 
 
-@bot.command(r'/stop')
-@bot.command(r'/delete')
+@bot.command(r'(/stop)')
+@bot.command(r'(/delete)')
 async def stop(chat, match):
     logger.info('%s: Стоп', chat.sender['id'])
     await storage.delete_user(pool, **chat.sender)
@@ -213,7 +213,7 @@ async def stop(chat, match):
 
 
 @bot.default
-@bot.command(r'(/?help|помощь)')
+@bot.command(r'/?(help|помощь|справка)')
 async def usage(chat, match):
     kb = keyboard()
     if isinstance(match, dict):
