@@ -139,13 +139,10 @@ async def cfg_news(chat, match):
 @bot.command(r'/?(admin|админ)')
 async def admin(chat, match):
     if chat.sender['id'] in settings.ADMINS:
-        text = """
-        ЦУБ - Центр Управления Ботом.
-
-        /msg текст - отправить 'текст' всем подписчикам"""
-        buttons = [['/users', '/users stat']]
+        buttons = [['/users', '/users stat'],
+                   ['/dbstats']]
         kb = keyboard(buttons)
-        await send_keyboard(chat, match.group(1), text, kb)
+        await send_keyboard(chat, match.group(1), settings.ADMIN_TEXT, kb)
     else:
         await chat.send_text(settings.HELP_TEXT)
 
@@ -155,7 +152,7 @@ async def admin_msg(chat, match):
     if chat.sender['id'] in settings.ADMINS:
         subscribed_users = await storage.get_users_sub(pool, 'msg')
         msg_title = '*сообщение для всех от* @spirkaa:'
-        msg_footer = 'Отписаться от всех сообщений бота - команда /stop'
+        msg_footer = 'Настроить уведомления от бота:\n/settings'
         text = '{}\n{}\n---\n{}'
         text = text.format(msg_title, match.group(1), msg_footer)
         md = {'parse_mode': 'Markdown'}
@@ -184,6 +181,17 @@ async def admin_users(chat, match):
         text = '\n'.join([str(i+1)+text.format(**user)
                           for i, user in enumerate(users)])
         await chat.send_text(text)
+
+
+@bot.command(r'/dbstats')
+async def dbstats(chat, match):
+    if chat.sender['id'] in settings.ADMINS:
+        logger.debug('dbstats')
+        data = await storage.get_stats(pool)
+        title = 'Обновление БД:\n'
+        text = '\n'.join(['{}: {}'.format(k, str(v))
+                          for k, v in sorted(data.items()) if v])
+        await chat.send_text(title+text)
 
 
 # Basic commands
