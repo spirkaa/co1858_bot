@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     logger.info('cron scheduler started')
     cron.every(10).minutes.do(update_media)
-    cron.every().hour.do(update_schedule)
+    cron.every(10).minutes.do(update_schedule)
 
     while True:
         cron.run_pending()

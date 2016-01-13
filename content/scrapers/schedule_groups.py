@@ -22,55 +22,51 @@ credentials = SignedJwtAssertionCredentials(
 
 table = 'Расписание уроков на 2015-2016 учебный год (экраны)'
 day_coords = {
-    'mon': {'num': 'A',
-            'name': 'B',
-            'aud': 'C',
-            'row_start': 3,
-            'row_end': 11},
-    'tue': {'num': 'A',
-            'name': 'B',
-            'aud': 'C',
-            'row_start': 13,
-            'row_end': 21},
-    'wed': {'num': 'A',
-            'name': 'B',
-            'aud': 'C',
-            'row_start': 23,
-            'row_end': 31},
-    'thu': {'num': 'E',
-            'name': 'F',
-            'aud': 'G',
-            'row_start': 3,
-            'row_end': 11},
-    'fri': {'num': 'E',
-            'name': 'F',
-            'aud': 'G',
-            'row_start': 13,
-            'row_end': 21}
+    'mon': {'num': 0,
+            'name': 1,
+            'aud': 2,
+            'row_start': 2,
+            'row_end': 10},
+    'tue': {'num': 0,
+            'name': 1,
+            'aud': 2,
+            'row_start': 12,
+            'row_end': 20},
+    'wed': {'num': 0,
+            'name': 1,
+            'aud': 2,
+            'row_start': 22,
+            'row_end': 30},
+    'thu': {'num': 4,
+            'name': 5,
+            'aud': 6,
+            'row_start': 2,
+            'row_end': 10},
+    'fri': {'num': 4,
+            'name': 5,
+            'aud': 6,
+            'row_start': 12,
+            'row_end': 20}
     }
 
 
 def get_sheet(index):
-    logger.info('Collect sheet %s', index)
+    logger.debug('Collect sheet %s', index)
     gc = gspread.authorize(credentials)
-    return gc.open(table).get_worksheet(index)
+    return gc.open(table).get_worksheet(index).get_all_values()
 
 
-def get_schedule(wks):
-    uroki = {}
-    klass = '0'
+def get_schedule(sheet):
+    lessons = {}
+    group = '0'
     for k, v in day_coords.items():
-        klass = wks.acell('A1').value
-        logger.debug('%s, %s', klass, k)
+        group = sheet[0][0]
         day = {}
         for x in range(v['row_start'], v['row_end'] + 1):
-            num = v['num'] + str(x)  # = A13
-            name = v['name'] + str(x)  # = B13
-            aud = v['aud'] + str(x)  # = C13
-            day[wks.acell(num).value] = [wks.acell(name).value,
-                                         wks.acell(aud).value]
-        uroki[k] = day
-    return {klass: uroki}
+            row = sheet[x]
+            day[row[v['num']]] = [row[v['name']], row[v['aud']]]
+        lessons[k] = day
+    return {group: lessons}
 
 
 def sheets():
@@ -85,6 +81,18 @@ def schedule():
 
 
 def collect():
-    result = {k: v for i in schedule() for k, v in i.items()}
+    res = {k: v for i in schedule() for k, v in i.items()}
     logger.debug('schedule_groups end')
-    return result
+    return res
+
+
+if __name__ == '__main__':
+    logging.basicConfig(
+        format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
+        level=logging.DEBUG)
+
+    result = collect()
+    print(len(result))
+
+    with open('s_groups.json', 'w') as outfile:
+        ujson.dump(result, outfile)

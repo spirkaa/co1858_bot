@@ -13,7 +13,11 @@ logger = logging.getLogger('scraper_schedule')
 
 async def add_to_storage(schedule_type, schedule):
     host = os.environ.get('REDIS_HOST', 'localhost')
-    pool = await aioredis.create_pool((host, 6379), encoding="utf-8", minsize=5, maxsize=10)
+    pool = await aioredis.create_pool(
+        (host, 6379),
+        encoding="utf-8",
+        minsize=5,
+        maxsize=10)
     await set_schedule(pool, schedule_type, schedule)
     await pool.clear()
 

@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 logging.getLogger('selenium').setLevel(logging.WARNING)
 
 url = 'https://mrko.mos.ru/dnevnik/'
+login = 'login'
+password = 'password'
 
 
 def drv():
@@ -43,8 +45,8 @@ def table_to_dict(table):
 def collect():
     driver = drv()
     driver.get(url)
-    driver.find_element_by_id('login').send_keys('login')
-    driver.find_element_by_id('pass').send_keys('password')
+    driver.find_element_by_id('login').send_keys(login)
+    driver.find_element_by_id('pass').send_keys(password)
     driver.find_element_by_xpath('//*[@id="em_enter"]/input[4]').click()
     sleep(1)
     driver.get(url + 'services/rasp.php?m=4&day=1')
@@ -66,3 +68,16 @@ def collect():
     driver.quit()
     logger.debug('schedule_teachers end')
     return schedule
+
+
+if __name__ == '__main__':
+    logging.basicConfig(
+        format='%(asctime)s [%(name)s:%(lineno)s] %(levelname)s - %(message)s',
+        level=logging.DEBUG)
+
+    result = collect()
+    print(len(result))
+
+    import ujson
+    with open('s_teachers.json', 'w') as outfile:
+        ujson.dump(result, outfile)
