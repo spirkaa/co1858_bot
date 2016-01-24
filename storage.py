@@ -109,8 +109,11 @@ async def set_schedule(pool, schedule_type, schedule):
     now = unix_time(datetime.datetime.now())
     async with pool.get() as redis:
         await redis.select(2)
-        await redis.set('schedule:{}'.format(schedule_type), ujson.dumps(schedule))
-        await redis.set('schedule:{}:modified'.format(schedule_type), now)
+        try:
+            await redis.set('schedule:{}'.format(schedule_type), ujson.dumps(schedule))
+            await redis.set('schedule:{}:modified'.format(schedule_type), now)
+        except:
+            pass
         await redis.select(0)
 
 
@@ -126,14 +129,17 @@ async def set_media(pool, content_type, articles, titles):
     now = unix_time(datetime.datetime.now())
     async with pool.get() as redis:
         await redis.select(1)
-        tr = redis.multi_exec()
-        for k, v in articles.items():
-            tr.set('{}:{}'.format(content_type, k), ujson.dumps(v))
-        titles_key = '{}:titles'.format(content_type)
-        tr.delete(titles_key)
-        tr.rpush(titles_key, *list(titles.values()))
-        tr.set('{}:modified'.format(content_type), now)
-        await tr.execute()
+        try:
+            tr = redis.multi_exec()
+            for k, v in articles.items():
+                tr.set('{}:{}'.format(content_type, k), ujson.dumps(v))
+            titles_key = '{}:titles'.format(content_type)
+            tr.delete(titles_key)
+            tr.rpush(titles_key, *list(titles.values()))
+            tr.set('{}:modified'.format(content_type), now)
+            await tr.execute()
+        except:
+            pass
         await redis.select(0)
 
 

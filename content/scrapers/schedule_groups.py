@@ -51,7 +51,6 @@ day_coords = {
 
 
 def get_sheet(index):
-    logger.debug('Collect sheet %s', index)
     gc = gspread.authorize(credentials)
     return gc.open(table).get_worksheet(index).get_all_values()
 
@@ -82,7 +81,6 @@ def schedule():
 
 def collect():
     res = {k: v for i in schedule() for k, v in i.items()}
-    logger.debug('schedule_groups end')
     return res
 
 

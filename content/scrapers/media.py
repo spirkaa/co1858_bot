@@ -16,7 +16,6 @@ async def get_source(url):
 
 
 async def parse_news():
-    logger.debug('parse_news start')
     url = 'http://sch1858uv.mskobr.ru'
     r = await get_source(url + '/novosti/')
     soup = BeautifulSoup(r, 'lxml')
@@ -24,7 +23,6 @@ async def parse_news():
     articles = {}
     titles = {}
     for index, v in enumerate(newsblock):
-        logger.debug(index)
         article = newsblock[index]
         date = article.select_one('.kris-news-data-txt').text
         title = article.select_one('.h3').text
@@ -39,12 +37,10 @@ async def parse_news():
         titles[index] = '{}. {}'.format(
             index,
             textwrap.shorten(title, width=25, placeholder='…'))
-    logger.debug('parse_news end')
     return [articles, titles]
 
 
 async def parse_video():
-    logger.debug('parse_video start')
     url = 'http://www.youtube.com'
     r = await get_source(url + '/user/co1858/videos')
     soup = BeautifulSoup(r, 'lxml')
@@ -52,7 +48,6 @@ async def parse_video():
     articles = {}
     titles = {}
     for index, v in enumerate(videoblock):
-        logger.debug(index)
         video = videoblock[index]
         link = url + video.select_one('a').attrs.get('href')
         title = video.select_one('a').attrs.get('title')
@@ -61,7 +56,6 @@ async def parse_video():
         titles[index] = '{}. {}'.format(
             index,
             textwrap.shorten(title, width=25, placeholder='…'))
-    logger.debug('parse_video end')
     return [articles, titles]
 
 

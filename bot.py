@@ -124,7 +124,7 @@ async def user_config(chat, match):
 
 
 @bot.command(r'^(видео|новости|сообщения):\s([{}{}])'.format(E_CHECK, E_CROSS))
-async def cfg_news(chat, match):
+async def set_cfg(chat, match):
     val = '0'
     key = settings.SUBS[match.group(1).lower()]
     if match.group(2) == E_CHECK:
@@ -177,7 +177,8 @@ async def admin_users(chat, match):
         users = await storage.get_users(pool)
         if match.group(1):
             return await chat.send_text(len(users))
-        text = '. {first_name} {last_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
+        # text = '. {first_name} {last_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
+        text = '. {first_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
         text = '\n'.join([str(i+1)+text.format(**user)
                           for i, user in enumerate(users)])
         await chat.send_text(text)

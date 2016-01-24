@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 async def send_news(chat, redis, index=0):
-    await chat.send_chat_action(action='typing')
     article = await get_media(redis, 'news', index)
     article = ujson.loads(article)
     titles = await get_media_titles(redis, 'news')
@@ -22,7 +21,6 @@ async def send_news(chat, redis, index=0):
 
 
 async def send_video(chat, redis, index=0):
-    await chat.send_chat_action(action='typing')
     article = await get_media(redis, 'video', index)
     article = ujson.loads(article)
     titles = await get_media_titles(redis, 'video')

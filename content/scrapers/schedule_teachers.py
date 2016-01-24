@@ -57,7 +57,6 @@ def collect():
     links = [link.attrs.get('href').split("'")[1] for link in links]
     schedule = {}
     for link in links:
-        logger.debug(link)
         driver.get(url + 'services/' + link)
         sleep(0.5)
         soup = BeautifulSoup(driver.page_source, 'lxml')
@@ -66,7 +65,6 @@ def collect():
         table = [[col.text for col in row.select('td')] for row in rows]
         schedule[name] = table_to_dict(table)
     driver.quit()
-    logger.debug('schedule_teachers end')
     return schedule
 
 
