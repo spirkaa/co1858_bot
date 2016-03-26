@@ -31,7 +31,10 @@ async def parse_news():
         except AttributeError:
             img = ''
         body = article.select_one('.kris-news-body').text
-        more = url + article.select_one('.link_more').attrs.get('href')
+        try:
+            more = url + article.select_one('.link_more').attrs.get('href')
+        except AttributeError:
+            more = ''
         article = dict(title=title, date=date, body=body, more=more, img=img)
         articles[index] = article
         titles[index] = '{}. {}'.format(

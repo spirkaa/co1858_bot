@@ -139,8 +139,7 @@ async def set_cfg(chat, match):
 @bot.command(r'/?(admin|админ)')
 async def admin(chat, match):
     if chat.sender['id'] in settings.ADMINS:
-        buttons = [['/users', '/users stat'],
-                   ['/dbstats']]
+        buttons = [['/dbstat', '/users']]
         kb = keyboard(buttons)
         await send_keyboard(chat, match.group(1), settings.ADMIN_TEXT, kb)
     else:
@@ -177,22 +176,22 @@ async def admin_users(chat, match):
         users = await storage.get_users(pool)
         if match.group(1):
             return await chat.send_text(len(users))
-        # text = '. {first_name} {last_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
         text = '. {first_name}, {id} [n{sub_news}v{sub_video}m{sub_msg}]'
         text = '\n'.join([str(i+1)+text.format(**user)
                           for i, user in enumerate(users)])
         await chat.send_text(text)
 
 
-@bot.command(r'/dbstats')
-async def dbstats(chat, match):
+@bot.command(r'/dbstat')
+async def dbstat(chat, match):
     if chat.sender['id'] in settings.ADMINS:
-        logger.debug('dbstats')
+        logger.debug('dbstat')
         data = await storage.get_stats(pool)
-        title = 'Обновление БД:\n'
-        text = '\n'.join(['{}: {}'.format(k, str(v))
-                          for k, v in sorted(data.items()) if v])
-        await chat.send_text(title+text)
+        users = await storage.get_users(pool)
+        dbupdates = '\n'.join(['{}: {}'.format(k, str(v))
+                               for k, v in sorted(data.items()) if v])
+        userscount = 'Пользователи: {}\n'.format(len(users))
+        await chat.send_text(userscount + dbupdates)
 
 
 # Basic commands
@@ -237,7 +236,7 @@ async def main():
     host = os.environ.get('REDIS_HOST', 'localhost')
     pool = await aioredis.create_pool(
         (host, 6379),
-        encoding="utf-8",
+        encoding='utf-8',
         minsize=5,
         maxsize=10)
     await bot.loop()
