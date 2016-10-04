@@ -2,7 +2,7 @@ import logging
 import os
 import ujson
 import gspread
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 from multiprocessing.pool import ThreadPool
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,15 +12,11 @@ logging.getLogger('requests').setLevel(logging.WARNING)
 logging.getLogger('oauth2client').setLevel(logging.WARNING)
 
 
-json_key = ujson.load(open(os.path.join(BASE_DIR, 'gspreadtoken.json')))
+json_key = os.path.join(BASE_DIR, 'gspreadtoken.json')
 scope = ['https://spreadsheets.google.com/feeds']
-credentials = SignedJwtAssertionCredentials(
-    json_key['client_email'],
-    json_key['private_key'].encode(),
-    scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_name(json_key, scope)
 
-
-table = 'Расписание уроков на 2015-2016 учебный год (экраны)'
+table = 'Расписание уроков на 2016-2017 учебный год (экраны)'
 day_coords = {
     'mon': {'num': 0,
             'name': 1,
