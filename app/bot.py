@@ -1,15 +1,17 @@
+import aioredis
+import asyncio
 import logging
 import os
 import re
-import asyncio
-import aioredis
 from aiotg import Bot
+
+import settings
+import storage
+from keyboard import send_keyboard, keyboard
 from content.bell import send_bell
 from content.media import send_news, send_video
 from content.schedule import send_schedule
-from keyboard import send_keyboard, keyboard, teachers_btns
-import storage
-import settings
+
 
 logger = logging.getLogger("co1858_bot")
 

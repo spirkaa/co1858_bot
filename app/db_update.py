@@ -1,8 +1,9 @@
+import asyncio
 import logging
 import time
-import asyncio
 import schedule as cron
-from content.scrapers import media, schedule
+
+from scrapers import media, schedule
 
 logger = logging.getLogger('db_update')
 

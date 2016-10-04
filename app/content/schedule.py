@@ -1,10 +1,11 @@
 import logging
 import re
 import ujson
-from content.wday import get_wday
-from keyboard import keyboard, time_btns
+
 from settings import TEACHERS
 from storage import get_schedule
+from keyboard import keyboard, time_btns
+from .wday import get_wday
 
 logger = logging.getLogger(__name__)
 

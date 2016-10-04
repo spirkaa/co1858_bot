@@ -1,7 +1,8 @@
 import logging
 import ujson
-from keyboard import keyboard, scraper_btns
+
 from storage import get_media, get_media_titles
+from keyboard import keyboard, scraper_btns
 
 logger = logging.getLogger(__name__)
 

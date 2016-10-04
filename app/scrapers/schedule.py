@@ -1,11 +1,12 @@
-import logging
-import asyncio
-import os
 import aioredis
+import asyncio
+import logging
+import os
 from concurrent.futures import ProcessPoolExecutor
+
 from storage import set_schedule
-import content.scrapers.schedule_groups as groups
-import content.scrapers.schedule_teachers as teachers
+from . import schedule_groups as groups
+# from . import schedule_teachers as teachers
 
 
 logger = logging.getLogger('scraper_schedule')

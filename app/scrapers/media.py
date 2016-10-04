@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import os
 import textwrap
-import asyncio
 import aiohttp
 import aioredis
 from bs4 import BeautifulSoup
+
 from storage import set_media
 
 logger = logging.getLogger(__name__)
