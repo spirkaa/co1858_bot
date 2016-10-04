@@ -23,12 +23,13 @@ async def add_to_storage(schedule_type, schedule):
 
 
 async def main(loop):
-    executor = ProcessPoolExecutor(2)
-    t = loop.run_in_executor(executor, teachers.collect)
+    # executor = ProcessPoolExecutor(2)
+    executor = ProcessPoolExecutor(1)
+    # t = loop.run_in_executor(executor, teachers.collect)
     g = loop.run_in_executor(executor, groups.collect)
-    tres = await t
+    # tres = await t
     gres = await g
-    await add_to_storage('teachers', tres)
+    # await add_to_storage('teachers', tres)
     await add_to_storage('groups', gres)
 
 
