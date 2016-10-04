@@ -1,10 +1,9 @@
 import logging
 import os
 import re
-import ujson
 import asyncio
 import aioredis
-from aiotg import TgBot
+from aiotg import Bot
 from content.bell import send_bell
 from content.media import send_news, send_video
 from content.schedule import send_schedule
@@ -14,11 +13,10 @@ import settings
 
 logger = logging.getLogger("co1858_bot")
 
-with open("config.json") as cfg:
-    config = ujson.load(cfg)
-
-bot = TgBot(**config)
-
+bot = Bot(
+    api_token=os.environ.get("API_TOKEN"),
+    name=os.environ.get("BOT_NAME"),
+    botan_token=os.environ.get("BOTAN_TOKEN"))
 
 # content commands: schedule
 space = r'[\s\-]*'
@@ -45,9 +43,13 @@ async def schedule(chat, match):
 
 @bot.command(r'/?(teachers|учителя)')
 async def teachers_menu(chat, match):
-    text = '💼 Выбери учителя для просмотра расписания (меню прокручивается)'
-    kb = keyboard(teachers_btns())
-    await send_keyboard(chat, match.group(1), text, kb)
+    text = 'Расписание учителей пока не работает'
+    await chat.reply(text)
+
+# async def teachers_menu(chat, match):
+#     text = '💼 Выбери учителя для просмотра расписания (меню прокручивается)'
+#     kb = keyboard(teachers_btns())
+#     await send_keyboard(chat, match.group(1), text, kb)
 
 
 @bot.command(r'/?(groups|классы)')
