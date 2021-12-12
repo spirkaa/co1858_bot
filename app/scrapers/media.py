@@ -17,7 +17,7 @@ async def get_source(url):
 
 
 async def parse_news():
-    url = 'http://sch1858uv.mskobr.ru'
+    url = 'http://kapotnya.mskobr.ru'
     r = await get_source(url + '/novosti/')
     soup = BeautifulSoup(r, 'lxml')
     newsblock = soup.select('.kris-news-box')

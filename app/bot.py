@@ -24,8 +24,8 @@ bot = Bot(
 space = r'[\s\-]*'
 teachers_re = '|'.join(settings.TEACHERS)
 cmds_re = '|'.join(settings.CMDS)
-groups_re = r'[0-9]{1,2}' + space + '[абвгклсАБВГКЛС]'
-add_space = re.compile('(^[0-9]{1,2})(' + space + ')([абвгклсАБВГКЛС])')
+groups_re = r'[0-9]{1,2}' + space + '[абвгдклмнпрАБВГДККЛМНПР]'
+add_space = re.compile('(^[0-9]{1,2})(' + space + ')([абвгдклмнпрАБВГДККЛМНПР])')
 regex = r'/?(({1})|({2})){0}({3})?'.format(
     space, teachers_re, groups_re, cmds_re)
 
@@ -38,7 +38,7 @@ async def schedule(chat, match):
     if match.group(2):
         who, cmd = match.group(2, 4)
     if match.group(3):
-        who = re.sub(add_space, r'\1 \3', match.group(3))
+        who = re.sub(add_space, r'\1-\3', match.group(3))
         cmd = match.group(4)
     await send_schedule(chat, pool, who.capitalize(), cmd)
 

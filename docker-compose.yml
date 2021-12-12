@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  app:
+    build: .
+    depends_on:
+      - redis
+      - selenium
+    env_file: .env
+    restart: always
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - ./redis/data:/data
+    restart: always
+
+  selenium:
+    image: selenium/standalone-firefox
+    restart: always

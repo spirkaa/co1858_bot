@@ -16,7 +16,7 @@ json_key = os.path.join(BASE_DIR, 'gspreadtoken.json')
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = ServiceAccountCredentials.from_json_keyfile_name(json_key, scope)
 
-table = 'Расписание уроков на 2016-2017 учебный год (экраны)'
+table = '1BwJnx15AjrUWemGxIthW4L14xI3_GSEykOXSac-jHBk'
 day_coords = {
     'mon': {'num': 0,
             'name': 1,
@@ -48,7 +48,7 @@ day_coords = {
 
 def get_sheet(index):
     gc = gspread.authorize(credentials)
-    return gc.open(table).get_worksheet(index).get_all_values()
+    return gc.open_by_key(table).get_worksheet(index).get_all_values()
 
 
 def get_schedule(sheet):
@@ -66,7 +66,7 @@ def get_schedule(sheet):
 
 def sheets():
     with ThreadPool(12) as pool:
-        return pool.map(get_sheet, range(48, 75))
+        return pool.map(get_sheet, range(48, 77))
 
 
 def schedule():
